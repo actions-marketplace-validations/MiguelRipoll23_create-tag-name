@@ -27,25 +27,30 @@ jobs:
 
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Cretate tag name
+      - name: Setup node
+        uses: actions/setup-node@v6
+
+      - name: Get next version
         uses: ./
-        id: create-tag-name
+        id: get-next-version
         with:
           channel: ${{ inputs.channel }}
 
       - name: Update version
-        uses: reedyuk/npm-version@1.2.2
-        with:
-          version: ${{ steps.create-tag-name.outputs.tag-name }}
+        run: |
+          npm version --no-git-tag-version ${{ env.NEXT_VERSION }}
+        env:
+          NEXT_VERSION: ${{ steps.get-next-version.outputs.next-version }}
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
-          branch: version/${{ steps.create-tag-name.outputs.tag-name }}
-          commit-message: ${{ steps.create-tag-name.outputs.tag-name }}
-          title: Bump version to ${{ steps.create-tag-name.outputs.tag-name }}
+          branch: version/${{ steps.get-next-version.outputs.next-version }}
+          commit-message: ${{ steps.get-next-version.outputs.next-version }}
+          title:
+            Bump version to ${{ steps.get-next-version.outputs.next-version }}
           body: Automated pull request triggered by a new release.
           labels: new-release,ignore-for-release
           reviewers: MiguelRipoll23

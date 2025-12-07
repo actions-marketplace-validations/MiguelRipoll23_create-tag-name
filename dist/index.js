@@ -8740,35 +8740,43 @@ const coerce = (version, options) => {
 
   let match = null
   if (!options.rtl) {
-    match = version.match(re[t.COERCE])
+    match = version.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE])
   } else {
     // Find the right-most coercible string that does not share
     // a terminus with a more left-ward coercible string.
     // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
+    // With includePrerelease option set, '1.2.3.4-rc' wants to coerce '2.3.4-rc', not '2.3.4'
     //
     // Walk through the string checking with a /g regexp
     // Manually set the index so as to pick up overlapping matches.
     // Stop when we get a match that ends at the string end, since no
     // coercible string can be more right-ward without the same terminus.
+    const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL]
     let next
-    while ((next = re[t.COERCERTL].exec(version)) &&
+    while ((next = coerceRtlRegex.exec(version)) &&
         (!match || match.index + match[0].length !== version.length)
     ) {
       if (!match ||
             next.index + next[0].length !== match.index + match[0].length) {
         match = next
       }
-      re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
+      coerceRtlRegex.lastIndex = next.index + next[1].length + next[2].length
     }
     // leave it in a clean state
-    re[t.COERCERTL].lastIndex = -1
+    coerceRtlRegex.lastIndex = -1
   }
 
   if (match === null) {
     return null
   }
 
-  return parse(`${match[2]}.${match[3] || '0'}.${match[4] || '0'}`, options)
+  const major = match[2]
+  const minor = match[3] || '0'
+  const patch = match[4] || '0'
+  const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : ''
+  const build = options.includePrerelease && match[6] ? `+${match[6]}` : ''
+
+  return parse(`${major}.${minor}.${patch}${prerelease}${build}`, options)
 }
 module.exports = coerce
 
@@ -9460,12 +9468,17 @@ createToken('XRANGELOOSE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`)
 
 // Coercion.
 // Extract anything that could conceivably be a part of a valid semver
-createToken('COERCE', `${'(^|[^\\d])' +
+createToken('COERCEPLAIN', `${'(^|[^\\d])' +
               '(\\d{1,'}${MAX_SAFE_COMPONENT_LENGTH}})` +
               `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
-              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
+              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`)
+createToken('COERCE', `${src[t.COERCEPLAIN]}(?:$|[^\\d])`)
+createToken('COERCEFULL', src[t.COERCEPLAIN] +
+              `(?:${src[t.PRERELEASE]})?` +
+              `(?:${src[t.BUILD]})?` +
               `(?:$|[^\\d])`)
 createToken('COERCERTL', src[t.COERCE], true)
+createToken('COERCERTLFULL', src[t.COERCEFULL], true)
 
 // Tilde ranges.
 // Meaning is "reasonably at or greater than"
@@ -32950,6 +32963,423 @@ try {
 
 /***/ }),
 
+/***/ 8854:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MERGED_CHECK_FAILED = exports.CLOSED = exports.PULL_REQUESTS_SEARCH_FAILED = exports.REFS_HEADS = exports.PULL_REQUESTS_BASE_BRANCH = exports.RELEASES_LISTING_FAILED = exports.NO_RELEASES_FOUND = exports.NOT_FOUND = exports.OCTOKIT_NOT_INITIALIZED = exports.GITHUB_TOKEN = void 0;
+exports.GITHUB_TOKEN = 'github-token';
+exports.OCTOKIT_NOT_INITIALIZED = 'octokit not initialized';
+exports.NOT_FOUND = 'Not Found';
+exports.NO_RELEASES_FOUND = 'No releases found';
+exports.RELEASES_LISTING_FAILED = 'Releases listing failed';
+exports.PULL_REQUESTS_BASE_BRANCH = 'pull_requests_base_branch';
+exports.REFS_HEADS = 'refs/heads/';
+exports.PULL_REQUESTS_SEARCH_FAILED = 'Pull requests search failed';
+exports.CLOSED = 'closed';
+exports.MERGED_CHECK_FAILED = 'Merged check failed';
+
+
+/***/ }),
+
+/***/ 8312:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.NEXT_VERSION = exports.NO_CHANGES_FOUND = exports.V = exports.STABLE = exports.PRERELEASE = exports.PATCH = exports.MINOR = exports.MAJOR = exports.NONE = exports.UNKNOWN = exports.NEW_BUILD_FOR_PRERELEASE = exports.CHANNEL = exports.PATCH_LABELS = exports.MINOR_LABELS = exports.MAJOR_LABELS = exports.INVALID_VERSION_NAME = void 0;
+exports.INVALID_VERSION_NAME = 'Invalid version name (must be semver-valid)';
+exports.MAJOR_LABELS = 'major-labels';
+exports.MINOR_LABELS = 'minor-labels';
+exports.PATCH_LABELS = 'patch-labels';
+exports.CHANNEL = 'channel';
+exports.NEW_BUILD_FOR_PRERELEASE = 'new-build-for-prerelease';
+exports.UNKNOWN = 'unknown';
+exports.NONE = 'none';
+exports.MAJOR = 'major';
+exports.MINOR = 'minor';
+exports.PATCH = 'patch';
+exports.PRERELEASE = 'prerelease';
+exports.STABLE = 'stable';
+exports.V = 'v';
+exports.NO_CHANGES_FOUND = 'No changes found';
+exports.NEXT_VERSION = 'next-version';
+
+
+/***/ }),
+
+/***/ 399:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.run = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github_1 = __nccwpck_require__(9621);
+const version_1 = __nccwpck_require__(6614);
+const version_constants_1 = __nccwpck_require__(8312);
+async function run() {
+    try {
+        runAction();
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            core.setFailed(error.message);
+        }
+    }
+}
+exports.run = run;
+async function runAction() {
+    (0, github_1.setupOctokit)();
+    const latestTag = await (0, github_1.getLatestTag)();
+    const latestTagName = latestTag.tag_name;
+    core.info('Latest tag name: ' + latestTagName);
+    const newTagName = await (0, version_1.getNextVersion)(latestTag);
+    core.info('Next version: ' + newTagName);
+    core.setOutput(version_constants_1.NEXT_VERSION, newTagName);
+}
+
+
+/***/ }),
+
+/***/ 9621:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getMergedPullRequestsFilteredByCreated = exports.getLatestTag = exports.setupOctokit = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const github_constants_1 = __nccwpck_require__(8854);
+let octokit = null;
+async function setupOctokit() {
+    const token = core.getInput(github_constants_1.GITHUB_TOKEN, { required: true });
+    octokit = github.getOctokit(token);
+}
+exports.setupOctokit = setupOctokit;
+async function getLatestTag() {
+    if (octokit === null)
+        throw new Error(github_constants_1.OCTOKIT_NOT_INITIALIZED);
+    const { context } = github;
+    const { repo } = context;
+    let response = null;
+    try {
+        response = await octokit.rest.repos.listReleases({
+            ...repo,
+            per_page: 1
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            const { message } = error;
+            if (message.includes(github_constants_1.NOT_FOUND)) {
+                throw new Error(github_constants_1.NO_RELEASES_FOUND);
+            }
+            else {
+                throw new Error(github_constants_1.RELEASES_LISTING_FAILED + ' (' + message + ')');
+            }
+        }
+        throw error;
+    }
+    const { data } = response;
+    if (data.length === 0) {
+        throw new Error(github_constants_1.NO_RELEASES_FOUND);
+    }
+    return data[0];
+}
+exports.getLatestTag = getLatestTag;
+async function getMergedPullRequestsFilteredByCreated(createdAt) {
+    if (octokit === null)
+        throw new Error(github_constants_1.OCTOKIT_NOT_INITIALIZED);
+    const { context } = github;
+    const { ref } = context;
+    const { owner, repo } = context.repo;
+    let base = core.getInput(github_constants_1.PULL_REQUESTS_BASE_BRANCH);
+    if (base.length === 0) {
+        base = ref.replace(github_constants_1.REFS_HEADS, '');
+    }
+    const query = `repo:${owner}/${repo} is:pr is:merged base:${base} created:>=${createdAt}`;
+    core.debug('Query: ' + query);
+    let response = null;
+    try {
+        response = await octokit.paginate(octokit.rest.search.issuesAndPullRequests, {
+            q: query
+        });
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            const { message } = error;
+            throw new Error(github_constants_1.PULL_REQUESTS_SEARCH_FAILED + ' (' + message + ')');
+        }
+        throw error;
+    }
+    core.info('Merged pull requests (' + response.length + ')');
+    return response;
+}
+exports.getMergedPullRequestsFilteredByCreated = getMergedPullRequestsFilteredByCreated;
+
+
+/***/ }),
+
+/***/ 6614:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getNextVersion = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const semver = __importStar(__nccwpck_require__(1383));
+const version_constants_1 = __nccwpck_require__(8312);
+const github_1 = __nccwpck_require__(9621);
+async function getNextVersion(latestTag) {
+    const tagName = latestTag.tag_name;
+    const tagCreatedAt = latestTag.created_at;
+    const nextVersion = await getNextVersionUsingLatestTag(tagName, tagCreatedAt);
+    // Error if no changes found
+    if (nextVersion === null) {
+        throw new Error(version_constants_1.NO_CHANGES_FOUND);
+    }
+    // Add version prefix
+    if (tagName.includes(version_constants_1.V)) {
+        return version_constants_1.V + nextVersion;
+    }
+    return nextVersion;
+}
+exports.getNextVersion = getNextVersion;
+async function getNextVersionUsingLatestTag(tagName, tagCreatedAt) {
+    let kind = version_constants_1.UNKNOWN;
+    const channel = core.getInput(version_constants_1.CHANNEL, { required: true });
+    const newBuildForPrerelease = core.getBooleanInput(version_constants_1.NEW_BUILD_FOR_PRERELEASE);
+    const version = parseVersionByName(tagName);
+    const prereleaseId = version.prerelease.length > 0 ? version.prerelease[0] : version_constants_1.STABLE;
+    const isStableChannel = channel === version_constants_1.STABLE;
+    const isDifferentChannel = channel !== prereleaseId;
+    const isPrereleaseChannel = channel !== version_constants_1.STABLE;
+    const hasPrereleaseId = version.prerelease.length > 0;
+    if (isStableChannel && isDifferentChannel) {
+        // beta.1 -> stable
+        kind = version_constants_1.NONE;
+    }
+    else if (newBuildForPrerelease && isPrereleaseChannel && hasPrereleaseId) {
+        // alpha.1 -> alpha.2 -> beta.1
+        kind = version_constants_1.PRERELEASE;
+    }
+    else {
+        // 1.0.0 -> 1.0.1 -> 1.1.0 -> 2.0.0
+        kind = await getKindByPullRequestsLabels(tagCreatedAt);
+    }
+    core.debug('Kind: ' + kind);
+    switch (kind) {
+        case version_constants_1.NONE:
+            return getVersionNameWithoutPrerelease(version);
+        case version_constants_1.MAJOR:
+            return getMajorVersionName(version, channel);
+        case version_constants_1.MINOR:
+            return getMinorVersionName(version, channel);
+        case version_constants_1.PATCH:
+            return getPatchVersionName(version, channel);
+        case version_constants_1.PRERELEASE:
+            return getPrereleaseVersionName(version, channel);
+        default:
+            return null;
+    }
+}
+function parseVersionByName(tagName) {
+    if (tagName.startsWith(version_constants_1.V)) {
+        tagName = tagName.substring(1);
+    }
+    const version = semver.parse(tagName);
+    if (version === null) {
+        throw new Error(version_constants_1.INVALID_VERSION_NAME);
+    }
+    return version;
+}
+async function getKindByPullRequestsLabels(tagCreatedAt) {
+    let kind = version_constants_1.UNKNOWN;
+    const mergedPullRequests = await (0, github_1.getMergedPullRequestsFilteredByCreated)(tagCreatedAt);
+    const majorLabels = getMajorLabels();
+    const minorLabels = getMinorLabels();
+    const patchLabels = getPatchLabels();
+    for (const mergedPullRequest of mergedPullRequests) {
+        const { title, labels } = mergedPullRequest;
+        const hasMajorLabel = labels.some((label) => {
+            if (typeof label.name === 'string') {
+                return majorLabels.includes(label.name);
+            }
+            return false;
+        });
+        if (hasMajorLabel) {
+            kind = version_constants_1.MAJOR;
+            logPullRequestTitleWithEmoji('🚨', title);
+            break;
+        }
+        const hasMinorLabel = labels.some((label) => {
+            if (typeof label.name === 'string') {
+                return minorLabels.includes(label.name);
+            }
+            return false;
+        });
+        if (hasMinorLabel) {
+            kind = kind === version_constants_1.UNKNOWN || kind === version_constants_1.PATCH ? version_constants_1.MINOR : kind;
+            logPullRequestTitleWithEmoji('✨', title);
+            continue;
+        }
+        const hasPatchLabel = labels.some((label) => {
+            if (typeof label.name === 'string') {
+                return patchLabels.includes(label.name);
+            }
+            return false;
+        });
+        if (hasPatchLabel) {
+            kind = kind === version_constants_1.UNKNOWN ? version_constants_1.PATCH : kind;
+            logPullRequestTitleWithEmoji('🛠️', title);
+            continue;
+        }
+        logPullRequestTitleWithEmoji('🚫', title);
+    }
+    return kind;
+}
+function getMajorLabels() {
+    const majorLabels = core.getInput(version_constants_1.MAJOR_LABELS);
+    return majorLabels.split(',');
+}
+function getMinorLabels() {
+    const minorLabels = core.getInput(version_constants_1.MINOR_LABELS);
+    return minorLabels.split(',');
+}
+function getPatchLabels() {
+    const patchLabels = core.getInput(version_constants_1.PATCH_LABELS);
+    return patchLabels.split(',');
+}
+function logPullRequestTitleWithEmoji(emoji, title) {
+    core.info(emoji + ' ' + title);
+}
+function getVersionNameWithoutPrerelease(version) {
+    version.prerelease = [];
+    return version.format();
+}
+function getMajorVersionName(version, channel) {
+    version.major++;
+    version.minor = 0;
+    version.patch = 0;
+    if (channel === version_constants_1.STABLE) {
+        version.prerelease = [];
+    }
+    else {
+        version.prerelease = [channel, 1];
+    }
+    return version.format();
+}
+function getMinorVersionName(version, channel) {
+    version.minor++;
+    version.patch = 0;
+    if (channel === version_constants_1.STABLE) {
+        version.prerelease = [];
+    }
+    else {
+        version.prerelease = [channel, 1];
+    }
+    return version.format();
+}
+function getPatchVersionName(version, channel) {
+    version.patch++;
+    if (channel === version_constants_1.STABLE) {
+        version.prerelease = [];
+    }
+    else {
+        version.prerelease = [channel, 1];
+    }
+    return version.format();
+}
+function getPrereleaseVersionName(version, channel) {
+    const [prereleaseId, prereleaseCount] = version.prerelease;
+    if (prereleaseId === channel) {
+        version.prerelease = [channel, prereleaseCount + 1];
+    }
+    else {
+        version.prerelease = [channel, 1];
+    }
+    return version.format();
+}
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -33207,17 +33637,6 @@ module.exports = require("zlib");
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__nccwpck_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
@@ -33227,310 +33646,15 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-// ESM COMPAT FLAG
-__nccwpck_require__.r(__webpack_exports__);
+var exports = __webpack_exports__;
 
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(2186);
-// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
-var github = __nccwpck_require__(5438);
-;// CONCATENATED MODULE: ./lib/constants/github-constants.js
-const GITHUB_TOKEN = "github-token";
-const OCTOKIT_NOT_INITIALIZED = "octokit not initialized";
-const NOT_FOUND = "Not Found";
-const NO_RELEASES_FOUND = "No releases found";
-const RELEASES_LISTING_FAILED = "Releases listing failed";
-const PULL_REQUESTS_BASE_BRANCH = "pull_requests_base_branch";
-const REFS_HEADS = "refs/heads/";
-const PULL_REQUESTS_SEARCH_FAILED = "Pull requests search failed";
-const CLOSED = "closed";
-const MERGED_CHECK_FAILED = "Merged check failed";
-
-;// CONCATENATED MODULE: ./lib/utils/github.js
-
-
-
-let octokit = null;
-async function setupOctokit() {
-    const token = core.getInput(GITHUB_TOKEN, { required: true });
-    octokit = github.getOctokit(token);
-}
-async function getLatestTag() {
-    if (octokit === null)
-        throw new Error(OCTOKIT_NOT_INITIALIZED);
-    const { context } = github;
-    const { repo } = context;
-    let response = null;
-    try {
-        response = await octokit.rest.repos.listReleases({
-            ...repo,
-            per_page: 1,
-        });
-    }
-    catch (error) {
-        if (error instanceof Error) {
-            const { message } = error;
-            if (message.includes(NOT_FOUND)) {
-                throw new Error(NO_RELEASES_FOUND);
-            }
-            else {
-                throw new Error(RELEASES_LISTING_FAILED + " (" + message + ")");
-            }
-        }
-        throw error;
-    }
-    const { data } = response;
-    if (data.length === 0) {
-        throw new Error(NO_RELEASES_FOUND);
-    }
-    return data[0];
-}
-async function getMergedPullRequestsFilteredByCreated(createdAt) {
-    if (octokit === null)
-        throw new Error(OCTOKIT_NOT_INITIALIZED);
-    const { context } = github;
-    const { ref } = context;
-    const { owner, repo } = context.repo;
-    let base = core.getInput(PULL_REQUESTS_BASE_BRANCH);
-    if (base.length === 0) {
-        base = ref.replace(REFS_HEADS, "");
-    }
-    const query = `repo:${owner}/${repo} is:pr is:merged base:${base} created:>=${createdAt}`;
-    core.debug("Query: " + query);
-    let response = null;
-    try {
-        response = await octokit.paginate(octokit.rest.search.issuesAndPullRequests, {
-            q: query,
-        });
-    }
-    catch (error) {
-        if (error instanceof Error) {
-            const { message } = error;
-            throw new Error(PULL_REQUESTS_SEARCH_FAILED + " (" + message + ")");
-        }
-        throw error;
-    }
-    core.info("Merged pull requests (" + response.length + ")");
-    return response;
-}
-
-// EXTERNAL MODULE: ./node_modules/semver/index.js
-var semver = __nccwpck_require__(1383);
-;// CONCATENATED MODULE: ./lib/constants/version-constants.js
-const INVALID_VERSION_NAME = "Invalid version name (must be semver-valid)";
-const MAJOR_LABELS = "major-labels";
-const MINOR_LABELS = "minor-labels";
-const PATCH_LABELS = "patch-labels";
-const CHANNEL = "channel";
-const NEW_BUILD_FOR_PRERELEASE = "new-build-for-prerelease";
-const UNKNOWN = "unknown";
-const NONE = "none";
-const MAJOR = "major";
-const MINOR = "minor";
-const PATCH = "patch";
-const PRERELEASE = "prerelease";
-const STABLE = "stable";
-const V = "v";
-const NO_CHANGES_FOUND = "No changes found";
-const TAG_NAME = "tag-name";
-
-;// CONCATENATED MODULE: ./lib/utils/version.js
-
-
-
-
-async function getNewTagName(latestTag) {
-    const tagName = latestTag.tag_name;
-    const tagCreatedAt = latestTag.created_at;
-    const newTagName = await getNewVersionName(tagName, tagCreatedAt);
-    // Error if no changes found
-    if (newTagName === null) {
-        throw new Error(NO_CHANGES_FOUND);
-    }
-    // Add version prefix
-    if (tagName.includes(V)) {
-        return V + newTagName;
-    }
-    return newTagName;
-}
-async function getNewVersionName(tagName, tagCreatedAt) {
-    let kind = UNKNOWN;
-    const channel = core.getInput(CHANNEL, { required: true });
-    const newBuildForPrerelease = core.getBooleanInput(NEW_BUILD_FOR_PRERELEASE);
-    const version = parseVersionByName(tagName);
-    const prereleaseId = version.prerelease.length > 0 ? version.prerelease[0] : STABLE;
-    const isStableChannel = channel === STABLE;
-    const isDifferentChannel = channel !== prereleaseId;
-    const isPrereleaseChannel = channel !== STABLE;
-    const hasPrereleaseId = version.prerelease.length > 0;
-    if (isStableChannel && isDifferentChannel) {
-        // beta.1 -> stable
-        kind = NONE;
-    }
-    else if (newBuildForPrerelease && isPrereleaseChannel && hasPrereleaseId) {
-        // alpha.1 -> alpha.2 -> beta.1
-        kind = PRERELEASE;
-    }
-    else {
-        // 1.0.0 -> 1.0.1 -> 1.1.0 -> 2.0.0
-        kind = await getKindByPullRequestsLabels(tagCreatedAt);
-    }
-    core.debug("Kind: " + kind);
-    switch (kind) {
-        case NONE:
-            return getVersionNameWithoutPrerelease(version);
-        case MAJOR:
-            return getMajorVersionName(version, channel);
-        case MINOR:
-            return getMinorVersionName(version, channel);
-        case PATCH:
-            return getPatchVersionName(version, channel);
-        case PRERELEASE:
-            return getPrereleaseVersionName(version, channel);
-        default:
-            return null;
-    }
-}
-function parseVersionByName(tagName) {
-    if (tagName.startsWith(V)) {
-        tagName = tagName.substring(1);
-    }
-    const version = semver.parse(tagName);
-    if (version === null) {
-        throw new Error(INVALID_VERSION_NAME);
-    }
-    return version;
-}
-async function getKindByPullRequestsLabels(tagCreatedAt) {
-    let kind = UNKNOWN;
-    const mergedPullRequests = await getMergedPullRequestsFilteredByCreated(tagCreatedAt);
-    const majorLabels = getMajorLabels();
-    const minorLabels = getMinorLabels();
-    const patchLabels = getPatchLabels();
-    for (const mergedPullRequest of mergedPullRequests) {
-        const { title, labels } = mergedPullRequest;
-        const hasMajorLabel = labels.some((label) => {
-            if (typeof label.name === "string") {
-                return majorLabels.includes(label.name);
-            }
-            return false;
-        });
-        if (hasMajorLabel) {
-            kind = MAJOR;
-            logPullRequestTitleWithEmoji("🚨", title);
-            break;
-        }
-        const hasMinorLabel = labels.some((label) => {
-            if (typeof label.name === "string") {
-                return minorLabels.includes(label.name);
-            }
-            return false;
-        });
-        if (hasMinorLabel) {
-            kind = kind === UNKNOWN || kind === PATCH ? MINOR : kind;
-            logPullRequestTitleWithEmoji("✨", title);
-            continue;
-        }
-        const hasPatchLabel = labels.some((label) => {
-            if (typeof label.name === "string") {
-                return patchLabels.includes(label.name);
-            }
-            return false;
-        });
-        if (hasPatchLabel) {
-            kind = kind === UNKNOWN ? PATCH : kind;
-            logPullRequestTitleWithEmoji("🛠️", title);
-            continue;
-        }
-        logPullRequestTitleWithEmoji("🚫", title);
-    }
-    return kind;
-}
-function getMajorLabels() {
-    const majorLabels = core.getInput(MAJOR_LABELS);
-    return majorLabels.split(",");
-}
-function getMinorLabels() {
-    const minorLabels = core.getInput(MINOR_LABELS);
-    return minorLabels.split(",");
-}
-function getPatchLabels() {
-    const patchLabels = core.getInput(PATCH_LABELS);
-    return patchLabels.split(",");
-}
-function logPullRequestTitleWithEmoji(emoji, title) {
-    core.info(emoji + " " + title);
-}
-function getVersionNameWithoutPrerelease(version) {
-    version.prerelease = [];
-    return version.format();
-}
-function getMajorVersionName(version, channel) {
-    version.major++;
-    version.minor = 0;
-    version.patch = 0;
-    if (channel === STABLE) {
-        version.prerelease = [];
-    }
-    else {
-        version.prerelease = [channel, 1];
-    }
-    return version.format();
-}
-function getMinorVersionName(version, channel) {
-    version.minor++;
-    version.patch = 0;
-    if (channel === STABLE) {
-        version.prerelease = [];
-    }
-    else {
-        version.prerelease = [channel, 1];
-    }
-    return version.format();
-}
-function getPatchVersionName(version, channel) {
-    version.patch++;
-    if (channel === STABLE) {
-        version.prerelease = [];
-    }
-    else {
-        version.prerelease = [channel, 1];
-    }
-    return version.format();
-}
-function getPrereleaseVersionName(version, channel) {
-    const [prereleaseId, prereleaseCount] = version.prerelease;
-    if (prereleaseId === channel) {
-        version.prerelease = [channel, prereleaseCount + 1];
-    }
-    else {
-        version.prerelease = [channel, 1];
-    }
-    return version.format();
-}
-
-;// CONCATENATED MODULE: ./lib/main.js
-
-
-
-
-async function run() {
-    setupOctokit();
-    const latestTag = await getLatestTag();
-    const latestTagName = latestTag.tag_name;
-    core.info("Latest tag name: " + latestTagName);
-    const newTagName = await getNewTagName(latestTag);
-    core.info("New tag name: " + newTagName);
-    core.setOutput(TAG_NAME, newTagName);
-}
-try {
-    run();
-}
-catch (error) {
-    if (error instanceof Error) {
-        core.setFailed(error.message);
-    }
-}
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+/**
+ * The entrypoint for the action.
+ */
+const main_1 = __nccwpck_require__(399);
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(0, main_1.run)();
 
 })();
 

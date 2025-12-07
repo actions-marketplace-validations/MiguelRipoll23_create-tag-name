@@ -1,6 +1,6 @@
-# create-tag-name
+# get-next-version
 
-Create tag names with the help of semantic versioning and pull requests labels.
+Bump versions with the help of semantic versioning and pull requests labels.
 
     Latest tag name: v1.0.0
     Merged pull requests (4)
@@ -8,9 +8,9 @@ Create tag names with the help of semantic versioning and pull requests labels.
     🚫 Update developer dependency
     🛠️ Fix severe bug found after decades
     🚫 Improve code formatter
-    New tag name: v1.1.0
+    Next version: v1.1.0
 
-Voilà! That's your new tag name just for you.
+Voilà! That's your next version.
 
 ## Usage
 
@@ -22,25 +22,25 @@ Voilà! That's your new tag name just for you.
         pull-requests: write
 
       steps:
-      - name: Create tag name
-        uses: MiguelRipoll23/create-tag-name@main
-        id: create-tag-name
-        with:
-          major-labels: breaking-change
-          minor-labels: feature,enhancement
-          patch-labels: bugfix
+      - name: Setup node
+        uses: actions/setup-node@v4.0.1
+
+      - name: Get next version
+        uses: MiguelRipoll23/get-next-version@v3.0.0
+        id: get-next-version
 
       - name: Update version
-        uses: reedyuk/npm-version@master
-        with:
-          version: ${{ steps.create-tag-name.outputs.tag-name }}
+        run: |
+          npm version --no-git-tag-version ${{ env.NEXT_VERSION }}
+        env:
+          NEXT_VERSION: ${{ steps.get-next-version.outputs.next-version }}
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@main
+        uses: peter-evans/create-pull-request@v6
         with:
-          branch: version/${{ steps.create-tag-name.outputs.tag-name }}
-          commit-message: ${{ steps.create-tag-name.outputs.tag-name }}
-          title: Bump version to ${{ steps.create-tag-name.outputs.tag-name }}
+          branch: version/${{ steps.get-next-version.outputs.next-version }}
+          commit-message: ${{ steps.get-next-version.outputs.next-version }}
+          title: Bump version to ${{ steps.get-next-version.outputs.next-version }}
           body: Automated pull request triggered by a new release.
           labels: new-release,ignore-for-release
           draft: true
@@ -49,22 +49,23 @@ Voilà! That's your new tag name just for you.
 
 ### Inputs
 
-| Name                      | Description                                                          | Default             |
-| ------------------------- | -------------------------------------------------------------------- | ------------------- |
-| github-token              | Token from GitHub Actions or a Personal Access Token.                | github.token        |
-| channel                   | Target channel (alpha/beta/stable/custom) of the version.            | stable              |
-| new-build-for-prerelease  | Create a new build if version name contains a prerelease identifier. | true                |
-| pull_requests_base_branch | Base branch used during pull requests search.                        | github.ref          |
-| major-labels              | Comma separated list of labels for major releases.                   | breaking-change     |
-| minor-labels              | Comma separated list of labels for minor releases.                   | feature,enhancement |
-| patch-labels              | Comma separated list of labels for patch releases.                   | bugfix,dependencies |
+| Name                      | Description                                                         | Default             |
+| ------------------------- | ------------------------------------------------------------------- | ------------------- |
+| github-token              | Token from GitHub Actions or a Personal Access Token                | github.token        |
+| channel                   | Target channel (alpha/beta/stable/custom) of the version            | stable              |
+| new-build-for-prerelease  | Create a new build if version name contains a prerelease identifier | true                |
+| pull_requests_base_branch | Base branch used during pull requests search                        | github.ref          |
+| major-labels              | Comma separated list of labels for major releases                   | breaking-change     |
+| minor-labels              | Comma separated list of labels for minor releases                   | feature,enhancement |
+| patch-labels              | Comma separated list of labels for patch releases                   | bugfix,dependencies |
 
 ### Outputs
 
-| Name     | Description                                          |
-| -------- | ---------------------------------------------------- |
-| tag-name | New generated tag name to use for your next version. |
+| Name         | Description                           |
+| ------------ | ------------------------------------- |
+| next-version | Next version to use for a new release |
 
 ## Feedback
 
-Any feedback or contributions to this repository are welcome! Please open an issue or a pull request describing your suggestions along your use case.
+Any feedback or contributions to this repository are welcome! Please open an
+issue or a pull request describing your suggestions along your use case.

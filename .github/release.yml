@@ -18,7 +18,7 @@ changelog:
       labels:
         - feature
 
-    - title: 💅 Enhancements
+    - title: ✨ Enhancements
       labels:
         - enhancement
 
@@ -33,4 +33,4 @@ changelog:
 
     - title: 🛠️ Other Changes
       labels:
-        - "*"
+        - '*'
